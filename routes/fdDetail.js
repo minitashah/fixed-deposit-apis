@@ -2,7 +2,7 @@ var express = require('express');
 var router = express.Router();
 var db = require('../database');
 var Helper = require('./helper');
-var allowedParams = ['id', 'user_id', 'bank_name', 'ac_number', 'ifsc_code', 'micr_code', 'amount', 'issue_date', 'renewal_date', 'interest']; // define allowed params globaly
+var allowedParams = ['id', 'user_id', 'bank_id', 'ac_number', 'amount', 'issue_date', 'renewal_date', 'interest']; // define allowed params globaly
 
 
 router.post('/', function (req, res, next) {
@@ -18,14 +18,25 @@ router.post('/', function (req, res, next) {
 });
 
 router.get('/:id', function (req, res, next) {
-    var queryString = 'SELECT * FROM `fixed_deposit` WHERE `id` = ' + req.params.id;
-    db.query(queryString, function (err, rows, field) {
-        if (err) {
-            res.send(err);
-        } else {
-            res.send(rows);
-            console.log('ok1');
+    var fdQuery = 'SELECT * FROM `fixed_deposit` WHERE `id` = ' + req.params.id;
+    db.query(fdQuery, function (err, fdRows) {
+        if(fdRows.length === 0) {
+            res.status(404).send({
+                error: "Not found."
+            });
+            return;
         }
+        var fd = fdRows[0];
+
+        var bankQuery = 'SELECT * FROM `bank_detail` WHERE `id` = ' + fd.bank_id;
+        db.query(bankQuery, function(err, bankRows) {
+            if (err) {
+                res.send(err);
+            } else {
+                fd.bankDetails = bankRows.length === 1 ?  bankRows[0] : {} ;
+                res.send(fd);
+            }
+        });
     });
 });
 
