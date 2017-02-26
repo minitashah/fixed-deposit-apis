@@ -31,6 +31,27 @@ router.get('/:id', function (req, res, next) {
 	});
 });
 
+/** PAGINATION EXAMPLE */
+router.get('/', function(req, res){
+	var limit = req.query.pageSize; //get this params from queryString
+	var offset = (req.query.page - 1) * limit; //get this params from queryString
+	var userCount = 'SELECT COUNT(*) AS totalCount FROM users';
+		db.query(userCount, function(err, countRows) {
+			var userList = 'SELECT * FROM `users` LIMIT ' + limit + ' OFFSET '  + offset;
+			db.query(userList, function(err, listRows) {
+				if(err) {
+					res.send(err);
+				} else {
+					var objText = {
+						user: listRows,
+						total: countRows[0].totalCount
+					}
+					res.send(objText);
+				}
+			});
+		});
+	});
+
 router.post('/', function (req, res, next) {
 	req.body = Helper.filterRequestBody(req.body, allowedParams);
 	var queryString = 'INSERT INTO `users` SET ?';
